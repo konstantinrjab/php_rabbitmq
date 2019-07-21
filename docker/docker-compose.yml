@@ -4,6 +4,8 @@ services:
   php-fpm:
     build:
       context: ./php-fpm
+    volumes:
+      - ../src:/var/www
   nginx:
     build:
       context: ./nginx
