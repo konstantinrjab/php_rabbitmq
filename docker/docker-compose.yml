@@ -4,6 +4,9 @@ services:
   php-fpm:
     build:
       context: ./php-fpm
+    environment:
+      XDEBUG_CONFIG: "remote_host=host.docker.internal remote_enable=1"
+      PHP_IDE_CONFIG: "serverName=Docker"
     volumes:
       - ../src:/var/www
   nginx:
