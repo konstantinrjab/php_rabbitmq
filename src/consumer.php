@@ -2,14 +2,15 @@
 
 require_once 'autoloader.php';
 
-$channel = RabbitmqConnection::getChannel();
+use PhpAmqpLib\Message\AMQPMessage;
 
+$channel = RabbitmqConnection::getChannel();
 $channel->queue_declare('hello', false, false, false, false);
 
 echo " [*] Waiting for messages. To exit press CTRL+C\n";
 
-$callback = function ($msg) {
-    echo " [x] Received '", $msg->body, "'\n";
+$callback = function (AMQPMessage $message): void {
+    echo " [x] Received '", $message->body, "'\n";
 };
 
 $channel->basic_consume('hello', '', false, true, false, false, $callback);

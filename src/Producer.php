@@ -4,7 +4,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 class Producer
 {
-    const CHANNEL_NAME = 'hello';
+    private const CHANNEL_NAME = 'hello';
 
     /** @var AMQPChannel $channel */
     private $channel;
