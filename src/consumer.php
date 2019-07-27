@@ -1,11 +1,8 @@
 <?php
 
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once 'autoloader.php';
 
-use PhpAmqpLib\Connection\AMQPStreamConnection;
-
-$connection = new AMQPStreamConnection('rabbitmq', 5672, 'guest', 'guest');
-$channel = $connection->channel();
+$channel = RabbitmqConnection::getChannel();
 
 $channel->queue_declare('hello', false, false, false, false);
 
