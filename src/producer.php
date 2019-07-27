@@ -10,10 +10,10 @@ try {
 
     $channel->queue_declare('hello', false, false, false, false);
 
-    $msg = new AMQPMessage('Hello World!');
-    $channel->basic_publish($msg, '', 'hello');
+    $message = new AMQPMessage(uniqid());
+    $channel->basic_publish($message, '', 'hello');
 
-    echo " [x] Sent 'Hello World!'\n";
+    echo " [x] Sent '$message->body'\n";
 } catch (Throwable $throwable) {
     $t = 1;
 }
