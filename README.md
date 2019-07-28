@@ -1,3 +1,3 @@
 ```shell script
-docker run --rm --inore-platform-reqs --no-scriptsnteractive --tty --volume ${PWD}:/app composer install --ig
+docker run --rm --interactive --tty --volume $PWD:/app composer install --ignore-platform-reqs --no-scripts
 ```
