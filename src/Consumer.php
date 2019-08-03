@@ -1,5 +1,7 @@
 <?php
 
+namespace App;
+
 use PhpAmqpLib\Message\AMQPMessage;
 
 class Consumer

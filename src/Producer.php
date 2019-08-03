@@ -1,6 +1,9 @@
 <?php
 
+namespace App;
+
 use PhpAmqpLib\Message\AMQPMessage;
+use AMQPChannel;
 
 class Producer
 {
