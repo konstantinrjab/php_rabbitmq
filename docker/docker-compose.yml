@@ -2,6 +2,7 @@ version: '3'
 
 services:
   php-fpm:
+    container_name: php
     build:
       context: ./php-fpm
     environment:
@@ -10,6 +11,7 @@ services:
     volumes:
       - ../:/var/www
   nginx:
+    container_name: nginx
     build:
       context: ./nginx
     volumes:
@@ -23,6 +25,7 @@ services:
       - "80:80"
       - "443:443"
   rabbitmq:
+    container_name: rabbitmq
     image: rabbitmq:3
     ports:
       - "5672:5672"
