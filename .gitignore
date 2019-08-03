@@ -1,2 +1,5 @@
 .idea
 vendor
+
+!src/logs/.gitkeep
+src/logs
