@@ -1,6 +1,8 @@
 <?php
 
-require_once 'autoloader.php';
+use App\WorkerReceiver;
+
+require_once '../vendor/autoload.php';
 
 $worker = new WorkerReceiver();
 
