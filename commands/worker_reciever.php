@@ -4,6 +4,8 @@ use App\WorkerReceiver;
 
 require_once '../vendor/autoload.php';
 
-$worker = new WorkerReceiver();
+$flowId = $argv[1];
+
+$worker = new WorkerReceiver($flowId);
 
 $worker->listen();

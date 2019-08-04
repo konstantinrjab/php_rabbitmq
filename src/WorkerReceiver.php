@@ -2,22 +2,34 @@
 
 namespace App;
 
+use App\Entity\SearchRequest;
 use Monolog\Logger;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
 class WorkerReceiver
 {
-    private const TIMEOUT = 5;
+    private const RESPONSE_TIMEOUT = 10;
+    private const WAITING_TIMEOUT = 1;
 
     /** @var int $timeStarted */
     private $timeStarted;
 
+    /** @var bool $isWaiting */
+    private $isWaiting = false;
+
+    /** @var bool $isWorkDone */
+    private $isWorkDone = false;
+
     /** @var Logger $logger */
     private $logger;
 
-    public function __construct()
+    /** @var string $flowId */
+    private $flowId;
+
+    public function __construct(string $flowId)
     {
+        $this->flowId = $flowId;
         $this->logger = new FileLogger();
     }
 
@@ -30,11 +42,11 @@ class WorkerReceiver
         $channel = $connection->channel();
 
         $channel->queue_declare(
-            'invoice_queue',    #queue
+            $this->flowId,    #queue
             false,              #passive
-            true,               #durable, make sure that RabbitMQ will never lose our queue if a crash occurs
+            false,               #durable, make sure that RabbitMQ will never lose our queue if a crash occurs
             false,              #exclusive - queues may only be accessed by the current connection
-            false               #auto delete - the queue is deleted when all consumers have finished using it
+            true               #auto delete - the queue is deleted when all consumers have finished using it
         );
 
         /**
@@ -54,7 +66,7 @@ class WorkerReceiver
          * Each consumer (subscription) has an identifier called a consumer tag
          */
         $channel->basic_consume(
-            'invoice_queue',        #queue
+            $this->flowId,        #queue
             '',                     #consumer tag - Identifier for the consumer, valid within the current channel. just string
             false,                  #no local - TRUE: the server will not send messages to the connection that published them
             false,                  #no ack, false - acks turned on, true - off.  send a proper acknowledgment from the worker, once we're done with a task
@@ -63,9 +75,9 @@ class WorkerReceiver
             array($this, 'process') #callback
         );
 
-        while (count($channel->callbacks) && !$this->timeoutReached()) {
-            $this->logger->addInfo('Waiting for incoming messages');
-            $channel->wait();
+        while (count($channel->callbacks) && !$this->timeoutReached() && !$this->isWorkDone) {
+            $this->wait();
+            $channel->wait(null, true);
         }
 
         $channel->close();
@@ -74,8 +86,8 @@ class WorkerReceiver
 
     public function process(AMQPMessage $msg): void
     {
-        $this->generatePdf()->sendEmail();
-        $this->logger->addInfo('Sended');
+        $searchRequest = unserialize($msg->body);
+        $this->search($searchRequest);
 
         /**
          * If a consumer dies without sending an acknowledgement the AMQP broker
@@ -89,27 +101,30 @@ class WorkerReceiver
     private function timeoutReached(): bool
     {
         $currentTime = microtime(true);
-        if ($currentTime >= $this->timeStarted + self::TIMEOUT) {
-            $this->logger->addInfo('Timeout reached');
+        if ($currentTime >= $this->timeStarted + self::RESPONSE_TIMEOUT) {
+            $this->logger->addInfo('Timeout reached, flowId: '.$this->flowId);
 
             return true;
         }
-        sleep(1);
 
         return false;
     }
 
-    private function generatePdf(): self
+    private function search(SearchRequest $searchRequest): void
     {
+        $this->logger->addInfo(sprintf('Searching, flowId: %s, supplier: %s', $searchRequest->getFlowId(), $searchRequest->getSupplier()));
         sleep(mt_rand(2, 5));
-
-        return $this;
+        $this->isWorkDone = true;
+        $this->logger->addInfo(sprintf('Job done, flowId: %s, supplier: %s', $searchRequest->getFlowId(), $searchRequest->getSupplier()));
     }
 
-    private function sendEmail(): self
+    public function wait(): void
     {
-        sleep(mt_rand(1, 3));
-
-        return $this;
+        if (!$this->isWaiting) {
+            $this->isWaiting = true;
+            $this->logger->addInfo('Waiting for incoming messages, flowId: '.$this->flowId);
+        }
+        sleep(self::WAITING_TIMEOUT);
+        $this->logger->addInfo('Slept, flowId: '.$this->flowId);
     }
 }
