@@ -7,7 +7,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 class WorkerSender
 {
-    public function execute($invoiceNum)
+    public function execute(int $invoiceNum): void
     {
         $connection = new AMQPStreamConnection('rabbitmq', 5672, 'guest', 'guest');
         $channel = $connection->channel();

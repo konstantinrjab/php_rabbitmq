@@ -2,13 +2,29 @@
 
 namespace App;
 
+use Monolog\Logger;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
 class WorkerReceiver
 {
-    public function listen()
+    private const TIMEOUT = 5;
+
+    /** @var int $timeStarted */
+    private $timeStarted;
+
+    /** @var Logger $logger */
+    private $logger;
+
+    public function __construct()
     {
+        $this->logger = new FileLogger();
+    }
+
+    public function listen(): void
+    {
+        $this->timeStarted = microtime(true);
+
         $connection = new AMQPStreamConnection('rabbitmq', 5672, 'guest', 'guest');
 
         $channel = $connection->channel();
@@ -47,12 +63,8 @@ class WorkerReceiver
             array($this, 'process') #callback
         );
 
-        while (count($channel->callbacks)) {
-//            $this->log->addInfo('Waiting for incoming messages');
-            $fp = fopen('logs/logs.txt', 'w');
-            fwrite($fp, 'Cats chase mice');
-            fclose($fp);
-
+        while (count($channel->callbacks) && !$this->timeoutReached()) {
+            $this->logger->addInfo('Waiting for incoming messages');
             $channel->wait();
         }
 
@@ -60,14 +72,10 @@ class WorkerReceiver
         $connection->close();
     }
 
-    /**
-     * process received request
-     *
-     * @param AMQPMessage $msg
-     */
-    public function process(AMQPMessage $msg)
+    public function process(AMQPMessage $msg): void
     {
         $this->generatePdf()->sendEmail();
+        $this->logger->addInfo('Sended');
 
         /**
          * If a consumer dies without sending an acknowledgement the AMQP broker
@@ -76,6 +84,19 @@ class WorkerReceiver
          * for the same queue before attempting redelivery
          */
         $msg->delivery_info['channel']->basic_ack($msg->delivery_info['delivery_tag']);
+    }
+
+    private function timeoutReached(): bool
+    {
+        $currentTime = microtime(true);
+        if ($currentTime >= $this->timeStarted + self::TIMEOUT) {
+            $this->logger->addInfo('Timeout reached');
+
+            return true;
+        }
+        sleep(1);
+
+        return false;
     }
 
     private function generatePdf(): self
