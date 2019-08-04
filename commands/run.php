@@ -1,12 +1,14 @@
 <?php
 
-use App\WorkerSender;
+use App\Entity\SearchRequest;
+use App\AsyncSearch;
 
 require_once '../vendor/autoload.php';
 
-$sender = new WorkerSender();
-$sender->execute(123);
+$sender = new AsyncSearch();
 
-//for ($workersCount = 1; $workersCount <= 1; $workersCount++) {
-    exec('php worker_reciever.php > /dev/null &');
-//}
+$searchRequest = new SearchRequest();
+$searchRequest->setFlowId(uniqid());
+
+//$sender->search($searchRequest, ['provider1']);
+$sender->search($searchRequest, ['provider1', 'provider2']);
