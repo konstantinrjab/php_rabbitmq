@@ -1,9 +1,7 @@
 {
   "require": {
     "ext-amqp": "*",
-    "php-amqplib/php-amqplib": ">=2.6.1",
-    "symfony/dependency-injection": "^4.3",
-    "container-interop/container-interop": "^1.2"
+    "php-amqplib/php-amqplib": ">=2.6.1"
   },
   "autoload": {
     "psr-4": {
