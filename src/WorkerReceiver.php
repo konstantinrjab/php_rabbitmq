@@ -2,8 +2,7 @@
 
 namespace App;
 
-use App\Entity\SearchRequest;
-use Monolog\Logger;
+use App\Repository\RedisRepository;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -18,19 +17,20 @@ class WorkerReceiver
     /** @var bool $isWaiting */
     private $isWaiting = false;
 
-    /** @var bool $isWorkDone */
-    private $isWorkDone = false;
-
     /** @var FileLogger $logger */
     private $logger;
 
     /** @var string $flowId */
     private $flowId;
 
+    /** @var Searcher $searcher */
+    private $searcher;
+
     public function __construct(string $flowId)
     {
         $this->flowId = $flowId;
         $this->logger = new FileLogger();
+        $this->searcher = new Searcher($this->logger, new RedisRepository());
     }
 
     public function listen(): void
@@ -75,7 +75,7 @@ class WorkerReceiver
             array($this, 'process') #callback
         );
 
-        while (count($channel->callbacks) && !$this->timeoutReached() && !$this->isWorkDone) {
+        while (count($channel->callbacks) && !$this->timeoutReached() && !$this->isWorkDone()) {
             $this->wait();
             $channel->wait(null, true);
         }
@@ -87,7 +87,7 @@ class WorkerReceiver
     public function process(AMQPMessage $msg): void
     {
         $searchRequest = unserialize($msg->body);
-        $this->search($searchRequest);
+        $this->searcher->search($searchRequest);
 
         /**
          * If a consumer dies without sending an acknowledgement the AMQP broker
@@ -110,12 +110,9 @@ class WorkerReceiver
         return false;
     }
 
-    private function search(SearchRequest $searchRequest): void
+    public function isWorkDone(): bool
     {
-        $this->logger->addInfo(sprintf('Searching, flowId: %s, supplier: %s', $searchRequest->getFlowId(), $searchRequest->getSupplier()));
-        sleep(mt_rand(2, 5));
-        $this->isWorkDone = true;
-        $this->logger->addInfo(sprintf('Job done, flowId: %s, supplier: %s', $searchRequest->getFlowId(), $searchRequest->getSupplier()));
+        return false;
     }
 
     public function wait(): void

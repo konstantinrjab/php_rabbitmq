@@ -1,4 +1,3 @@
-# php-fpm
 FROM php:fpm-alpine
 
 RUN apk add --no-cache $PHPIZE_DEPS \
@@ -7,6 +6,9 @@ RUN apk add --no-cache $PHPIZE_DEPS \
 
 RUN docker-php-ext-install sockets
 RUN docker-php-ext-install bcmath
+RUN pecl install -o -f redis \
+&&  rm -rf /tmp/pear \
+&&  docker-php-ext-enable redis
 
 COPY php.ini $PHP_INI_DIR
 
