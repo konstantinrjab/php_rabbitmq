@@ -21,7 +21,7 @@ class RedisRepository
         $this->redis->set($key, $value);
     }
 
-    public function get(string $key): ?SearchResult
+    public function getSearchResult(string $key): ?SearchResult
     {
         $result = $this->redis->get($key);
         if (!$result) {

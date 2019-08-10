@@ -121,7 +121,7 @@ class SearchWorker
 
     private function isWorkDone(): bool
     {
-        return (bool) $this->redisRepository->get($this->searchId);
+        return (bool) $this->redisRepository->getSearchResult($this->searchId);
     }
 
     private function wait(AMQPChannel $channel): void
