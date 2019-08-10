@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Repository\RedisRepository;
+use App\Service\RedisService;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -20,17 +21,25 @@ class WorkerReceiver
     /** @var FileLogger $logger */
     private $logger;
 
-    /** @var string $flowId */
-    private $flowId;
+    /** @var string $searchId */
+    private $searchId;
 
     /** @var Searcher $searcher */
     private $searcher;
 
-    public function __construct(string $flowId)
+    /** @var RedisRepository $redisRepository */
+    private $redisRepository;
+
+    /** @var RedisService $redisService */
+    private $redisService;
+
+    public function __construct(string $searchId)
     {
-        $this->flowId = $flowId;
+        $this->searchId = $searchId;
         $this->logger = new FileLogger();
-        $this->searcher = new Searcher($this->logger, new RedisRepository());
+        $this->redisRepository = new RedisRepository();
+        $this->redisService = new RedisService();
+        $this->searcher = new Searcher($this->logger, $this->redisRepository, $this->redisService);
     }
 
     public function listen(): void
@@ -42,7 +51,7 @@ class WorkerReceiver
         $channel = $connection->channel();
 
         $channel->queue_declare(
-            $this->flowId,    #queue
+            $this->searchId,    #queue
             false,              #passive
             false,               #durable, make sure that RabbitMQ will never lose our queue if a crash occurs
             false,              #exclusive - queues may only be accessed by the current connection
@@ -66,7 +75,7 @@ class WorkerReceiver
          * Each consumer (subscription) has an identifier called a consumer tag
          */
         $channel->basic_consume(
-            $this->flowId,        #queue
+            $this->searchId,        #queue
             '',                     #consumer tag - Identifier for the consumer, valid within the current channel. just string
             false,                  #no local - TRUE: the server will not send messages to the connection that published them
             false,                  #no ack, false - acks turned on, true - off.  send a proper acknowledgment from the worker, once we're done with a task
@@ -102,7 +111,7 @@ class WorkerReceiver
     {
         $currentTime = microtime(true);
         if ($currentTime >= $this->timeStarted + self::RESPONSE_TIMEOUT) {
-            $this->logger->addInfo('Timeout reached, flowId: '.$this->flowId);
+            $this->logger->addInfo('Timeout reached, searchId: '.$this->searchId);
 
             return true;
         }
@@ -112,16 +121,16 @@ class WorkerReceiver
 
     public function isWorkDone(): bool
     {
-        return false;
+        return (bool) $this->redisRepository->get($this->searchId);
     }
 
     public function wait(): void
     {
         if (!$this->isWaiting) {
             $this->isWaiting = true;
-            $this->logger->addInfo('Waiting for incoming messages, flowId: '.$this->flowId);
+            $this->logger->addInfo('Waiting for incoming messages, searchId: '.$this->searchId);
         }
         sleep(self::WAITING_TIMEOUT);
-        $this->logger->addInfo('Slept, flowId: '.$this->flowId);
+        $this->logger->addInfo('Slept, searchId: '.$this->searchId);
     }
 }

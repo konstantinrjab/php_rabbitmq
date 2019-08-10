@@ -3,11 +3,20 @@
 namespace App;
 
 use App\Entity\SearchRequest;
+use App\Service\RedisService;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
 class AsyncSearch
 {
+    /** @var RedisService $redisService */
+    private $redisService;
+
+    public function __construct()
+    {
+        $this->redisService = new RedisService();
+    }
+
     public function search(SearchRequest $searchRequest, array $suppliers): void
     {
         $connection = new AMQPStreamConnection('rabbitmq', 5672, 'guest', 'guest');
@@ -40,7 +49,8 @@ class AsyncSearch
         $connection->close();
 
         foreach ($suppliers as $supplier) {
-            exec("php worker_reciever.php $flowId > /dev/null &");
+            $searchId = $this->redisService->getSearchIdByFlowIdAndSupplier($searchRequest->getFlowId(), $supplier);
+            exec("php worker_reciever.php $searchId > /dev/null &");
         }
     }
 }

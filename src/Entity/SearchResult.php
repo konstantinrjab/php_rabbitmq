@@ -2,13 +2,16 @@
 
 namespace App\Entity;
 
-class SearchRequest
+class SearchResult
 {
     /** @var string $flowId */
     private $flowId;
 
     /** @var string $supplier */
     private $supplier;
+
+    /** @var string $data */
+    private $data;
 
     public function getFlowId(): string
     {
@@ -28,5 +31,15 @@ class SearchRequest
     public function setSupplier(string $supplier): void
     {
         $this->supplier = $supplier;
+    }
+
+    public function getData(): string
+    {
+        return $this->data;
+    }
+
+    public function setData(string $data): void
+    {
+        $this->data = $data;
     }
 }
