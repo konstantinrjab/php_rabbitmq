@@ -21,7 +21,7 @@ class WorkerReceiver
     /** @var bool $isWorkDone */
     private $isWorkDone = false;
 
-    /** @var Logger $logger */
+    /** @var FileLogger $logger */
     private $logger;
 
     /** @var string $flowId */

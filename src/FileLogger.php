@@ -7,7 +7,7 @@ use Monolog\Logger;
 
 class FileLogger extends Logger
 {
-    private const PATH = __DIR__.DIRECTORY_SEPARATOR.'logs'.DIRECTORY_SEPARATOR.'main.log';
+    private const PATH = __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'logs'.DIRECTORY_SEPARATOR.'main.log';
 
     public function __construct()
     {
