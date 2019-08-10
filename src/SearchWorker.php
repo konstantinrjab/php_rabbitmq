@@ -4,10 +4,11 @@ namespace App;
 
 use App\Repository\RedisRepository;
 use App\Service\RedisService;
+use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
-class WorkerReceiver
+class SearchWorker
 {
     private const RESPONSE_TIMEOUT = 10;
     private const WAITING_TIMEOUT = 1;
@@ -51,11 +52,11 @@ class WorkerReceiver
         $channel = $connection->channel();
 
         $channel->queue_declare(
-            $this->searchId,    #queue
-            false,              #passive
-            false,               #durable, make sure that RabbitMQ will never lose our queue if a crash occurs
-            false,              #exclusive - queues may only be accessed by the current connection
-            true               #auto delete - the queue is deleted when all consumers have finished using it
+            $this->searchId,
+            false,
+            false,
+            true,
+            true
         );
 
         /**
@@ -75,18 +76,17 @@ class WorkerReceiver
          * Each consumer (subscription) has an identifier called a consumer tag
          */
         $channel->basic_consume(
-            $this->searchId,        #queue
+            $this->searchId,
             '',                     #consumer tag - Identifier for the consumer, valid within the current channel. just string
             false,                  #no local - TRUE: the server will not send messages to the connection that published them
             false,                  #no ack, false - acks turned on, true - off.  send a proper acknowledgment from the worker, once we're done with a task
             false,                  #exclusive - queues may only be accessed by the current connection
             false,                  #no wait - TRUE: the server will not respond to the method. The client should not wait for a reply method
-            array($this, 'process') #callback
+            array($this, 'process')
         );
 
         while (count($channel->callbacks) && !$this->timeoutReached() && !$this->isWorkDone()) {
-            $this->wait();
-            $channel->wait(null, true);
+            $this->wait($channel);
         }
 
         $channel->close();
@@ -119,12 +119,12 @@ class WorkerReceiver
         return false;
     }
 
-    public function isWorkDone(): bool
+    private function isWorkDone(): bool
     {
         return (bool) $this->redisRepository->get($this->searchId);
     }
 
-    public function wait(): void
+    private function wait(AMQPChannel $channel): void
     {
         if (!$this->isWaiting) {
             $this->isWaiting = true;
@@ -132,5 +132,6 @@ class WorkerReceiver
         }
         sleep(self::WAITING_TIMEOUT);
         $this->logger->addInfo('Slept, searchId: '.$this->searchId);
+        $channel->wait(null, true);
     }
 }

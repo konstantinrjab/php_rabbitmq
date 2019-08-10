@@ -6,6 +6,7 @@ use App\Entity\SearchRequest;
 use App\Service\RedisService;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
+use PhpAmqpLib\Channel\AMQPChannel;
 
 class AsyncSearch
 {
@@ -22,35 +23,35 @@ class AsyncSearch
         $connection = new AMQPStreamConnection('rabbitmq', 5672, 'guest', 'guest');
         $channel = $connection->channel();
 
-        $flowId = $searchRequest->getFlowId();
-        $channel->queue_declare(
-            $flowId,    #queue - Queue names may be up to 255 bytes of UTF-8 characters
-            false,              #passive - can use this to check whether an exchange exists without modifying the server state
-            false,               #durable, make sure that RabbitMQ will never lose our queue if a crash occurs - the queue will survive a broker restart
-            false,              #exclusive - used by only one connection and the queue will be deleted when that connection closes
-            true               #auto delete - queue is deleted when last consumer unsubscribes
-        );
-
         foreach ($suppliers as $supplier) {
-            $searchRequest->setSupplier($supplier);
-            $msg = new AMQPMessage(
-                serialize($searchRequest),
-                ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT] # make message persistent, so it is not lost if server crashes or quits
+            $searchId = $this->redisService->getSearchIdByFlowIdAndSupplier($searchRequest->getFlowId(), $supplier);
+            $channel->queue_declare(
+                $searchId,
+                false,    #passive - can use this to check whether an exchange exists without modifying the server state
+                false,
+                true,   #exclusive - used by only one connection and the queue will be deleted when that connection closes
+                true
             );
-
-            $channel->basic_publish(
-                $msg,               #message
-                '',                 #exchange
-                $flowId     #routing key (queue)
-            );
+            $this->sendJobMessage($searchRequest, $supplier, $channel, $searchId);
+            exec("php search_worker.php $searchId > /dev/null &");
         }
 
         $channel->close();
         $connection->close();
+    }
 
-        foreach ($suppliers as $supplier) {
-            $searchId = $this->redisService->getSearchIdByFlowIdAndSupplier($searchRequest->getFlowId(), $supplier);
-            exec("php worker_reciever.php $searchId > /dev/null &");
-        }
+    private function sendJobMessage(SearchRequest $searchRequest, $supplier, AMQPChannel $channel, string $flowId): void
+    {
+        $searchRequest->setSupplier($supplier);
+        $amqpMessage = new AMQPMessage(
+            serialize($searchRequest),
+            ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]
+        );
+
+        $channel->basic_publish(
+            $amqpMessage,
+            '',
+            $flowId
+        );
     }
 }
