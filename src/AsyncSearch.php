@@ -28,8 +28,8 @@ class AsyncSearch
             $channel->queue_declare(
                 $searchId,
                 false,    #passive - can use this to check whether an exchange exists without modifying the server state
-                false,
-                true,   #exclusive - used by only one connection and the queue will be deleted when that connection closes
+                true,
+                false,   #exclusive - used by only one connection and the queue will be deleted when that connection closes
                 true
             );
             $this->sendJobMessage($searchRequest, $supplier, $channel, $searchId);

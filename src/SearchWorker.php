@@ -54,8 +54,8 @@ class SearchWorker
         $channel->queue_declare(
             $this->searchId,
             false,
-            false,
             true,
+            false,
             true
         );
 
