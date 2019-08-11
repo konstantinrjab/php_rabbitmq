@@ -2,7 +2,10 @@
 
 namespace App;
 
+use App\Collection\SearchResultCollection;
+use App\Collection\SupplierCollection;
 use App\Entity\SearchRequest;
+use App\Repository\RedisRepository;
 use App\Service\RedisService;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -13,17 +16,24 @@ class AsyncSearch
     /** @var RedisService $redisService */
     private $redisService;
 
+    /** @var RedisRepository $redisRepository */
+    private $redisRepository;
+
     public function __construct()
     {
         $this->redisService = new RedisService();
+        $this->redisRepository = new RedisRepository();
     }
 
-    public function search(SearchRequest $searchRequest, array $suppliers): void
+    public function search(
+        SearchRequest $searchRequest,
+        SupplierCollection $supplierCollection
+    ): SearchResultCollection
     {
         $connection = new AMQPStreamConnection('rabbitmq', 5672, 'guest', 'guest');
         $channel = $connection->channel();
 
-        foreach ($suppliers as $supplier) {
+        foreach ($supplierCollection as $supplier) {
             $searchId = $this->redisService->getSearchIdByFlowIdAndSupplier($searchRequest->getFlowId(), $supplier);
             $channel->queue_declare(
                 $searchId,
@@ -38,6 +48,8 @@ class AsyncSearch
 
         $channel->close();
         $connection->close();
+
+        return $this->assembleSearchResult($searchRequest->getFlowId(), $supplierCollection);
     }
 
     private function sendJobMessage(SearchRequest $searchRequest, $supplier, AMQPChannel $channel, string $flowId): void
@@ -53,5 +65,18 @@ class AsyncSearch
             '',
             $flowId
         );
+    }
+
+    private function assembleSearchResult(string $flowId, SupplierCollection $supplierCollection): SearchResultCollection
+    {
+        $searchResultCollection = new SearchResultCollection();
+        foreach ($supplierCollection as $supplier) {
+            $searchResult = $this->redisRepository->getSearchResult($this->redisService->getSearchIdByFlowIdAndSupplier($flowId, $supplier));
+            if ($searchResult) {
+                $searchResultCollection->add($searchResult);
+            }
+        }
+
+        return $searchResultCollection;
     }
 }
