@@ -10,7 +10,10 @@ $asyncSearch = new AsyncSearch();
 $searchRequest = new SearchRequest();
 $searchRequest->setFlowId(uniqid());
 
+$supplierNames = ['supplier1', 'supplier2', 'supplier3', 'supplier4', 'supplier5', 'supplier6', 'supplier7', 'supplier8'];
 $supplierCollection = new SupplierCollection();
-$supplierCollection->createAndAddSuppliers(['supplier1', 'supplier2', 'supplier3', 'supplier4']);
+$supplierCollection->createAndAddSuppliers($supplierNames);
 
-$searchResult = $asyncSearch->search($searchRequest, $supplierCollection);
+$searchResultCollection = $asyncSearch->search($searchRequest, $supplierCollection);
+
+echo 'Get result from '.count($searchResultCollection).' suppliers out of '.count($supplierNames)."\n\n";

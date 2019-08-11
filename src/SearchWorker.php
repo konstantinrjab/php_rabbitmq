@@ -130,8 +130,8 @@ class SearchWorker
             $this->isWaiting = true;
             $this->logger->addInfo('Waiting for incoming messages, searchId: '.$this->searchId);
         }
-        sleep(self::WAITING_TIMEOUT);
-        $this->logger->addInfo('Slept, searchId: '.$this->searchId);
         $channel->wait(null, true);
+        sleep(self::WAITING_TIMEOUT);
+        $this->logger->logSleep($this->searchId, self::WAITING_TIMEOUT);
     }
 }
