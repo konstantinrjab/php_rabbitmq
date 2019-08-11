@@ -10,7 +10,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 
 class SearchWorker
 {
-    private const RESPONSE_TIMEOUT = 10;
+    private const RESPONSE_TIMEOUT = 5;
     private const WAITING_TIMEOUT = 1;
 
     /** @var int $timeStarted */

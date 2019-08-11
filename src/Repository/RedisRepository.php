@@ -7,6 +7,8 @@ use Redis;
 
 class RedisRepository
 {
+    private const TTL = 10;
+
     /** @var Redis $redis */
     private $redis;
 
@@ -18,7 +20,7 @@ class RedisRepository
 
     public function insert(string $key, string $value): void
     {
-        $this->redis->set($key, $value);
+        $this->redis->set($key, $value, self::TTL);
     }
 
     public function getSearchResult(string $key): ?SearchResult

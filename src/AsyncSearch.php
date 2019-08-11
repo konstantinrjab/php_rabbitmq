@@ -48,6 +48,7 @@ class AsyncSearch
 
         $channel->close();
         $connection->close();
+        sleep(5);
 
         return $this->assembleSearchResult($searchRequest->getFlowId(), $supplierCollection);
     }

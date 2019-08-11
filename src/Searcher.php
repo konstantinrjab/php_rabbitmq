@@ -28,13 +28,14 @@ class Searcher
     public function search(SearchRequest $searchRequest): void
     {
         $supplierName = $searchRequest->getSupplier()->getName();
-        $this->logger->addInfo(sprintf('Searching, flowId: %s, supplier: %s', $searchRequest->getFlowId(), $supplierName));
+        $this->logger->logSearchStarted($searchRequest->getFlowId(), $supplierName);
 
         $searchResult = $this->createSearchResult($searchRequest);
 
-        sleep(mt_rand(2, 5));
+        $sleepTime = mt_rand(3, 6);
+        sleep($sleepTime);
         $this->redisRepository->insert($this->redisService->getSearchIdBySearchRequest($searchRequest), serialize($searchResult));
-        $this->logger->addInfo(sprintf('Job done, flowId: %s, supplier: %s', $searchRequest->getFlowId(), $supplierName));
+        $this->logger->logJobIsDone($sleepTime, $searchRequest->getFlowId(), $supplierName);
     }
 
     private function createSearchResult(SearchRequest $searchRequest): SearchResult

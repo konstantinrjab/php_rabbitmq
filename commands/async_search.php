@@ -11,6 +11,6 @@ $searchRequest = new SearchRequest();
 $searchRequest->setFlowId(uniqid());
 
 $supplierCollection = new SupplierCollection();
-$supplierCollection->createAndAddSuppliers(['provider1', 'provider2']);
+$supplierCollection->createAndAddSuppliers(['supplier1', 'supplier2', 'supplier3', 'supplier4']);
 
-$asyncSearch->search($searchRequest, $supplierCollection);
+$searchResult = $asyncSearch->search($searchRequest, $supplierCollection);
