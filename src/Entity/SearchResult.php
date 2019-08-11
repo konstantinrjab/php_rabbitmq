@@ -28,7 +28,7 @@ class SearchResult
         return $this->supplier;
     }
 
-    public function setSupplier(string $supplier): void
+    public function setSupplier(Supplier $supplier): void
     {
         $this->supplier = $supplier;
     }

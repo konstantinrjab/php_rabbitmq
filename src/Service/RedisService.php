@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\SearchRequest;
+use App\Entity\Supplier;
 
 class RedisService
 {
@@ -11,8 +12,8 @@ class RedisService
         return $this->getSearchIdByFlowIdAndSupplier($searchRequest->getFlowId(), $searchRequest->getSupplier());
     }
 
-    public function getSearchIdByFlowIdAndSupplier(string $flowId, string $supplier): string
+    public function getSearchIdByFlowIdAndSupplier(string $flowId, Supplier $supplier): string
     {
-        return $flowId.'_'.$supplier;
+        return $flowId.'_'.$supplier->getName();
     }
 }

@@ -7,7 +7,7 @@ class SearchRequest
     /** @var string $flowId */
     private $flowId;
 
-    /** @var string $supplier */
+    /** @var Supplier $supplier */
     private $supplier;
 
     public function getFlowId(): string
@@ -20,12 +20,12 @@ class SearchRequest
         $this->flowId = $flowId;
     }
 
-    public function getSupplier(): string
+    public function getSupplier(): Supplier
     {
         return $this->supplier;
     }
 
-    public function setSupplier(string $supplier): void
+    public function setSupplier(Supplier $supplier): void
     {
         $this->supplier = $supplier;
     }

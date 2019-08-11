@@ -27,13 +27,23 @@ class Searcher
 
     public function search(SearchRequest $searchRequest): void
     {
-        $this->logger->addInfo(sprintf('Searching, flowId: %s, supplier: %s', $searchRequest->getFlowId(), $searchRequest->getSupplier()));
+        $supplierName = $searchRequest->getSupplier()->getName();
+        $this->logger->addInfo(sprintf('Searching, flowId: %s, supplier: %s', $searchRequest->getFlowId(), $supplierName));
+
+        $searchResult = $this->createSearchResult($searchRequest);
+
+        sleep(mt_rand(2, 5));
+        $this->redisRepository->insert($this->redisService->getSearchIdBySearchRequest($searchRequest), serialize($searchResult));
+        $this->logger->addInfo(sprintf('Job done, flowId: %s, supplier: %s', $searchRequest->getFlowId(), $supplierName));
+    }
+
+    private function createSearchResult(SearchRequest $searchRequest): SearchResult
+    {
         $searchResult = new SearchResult();
         $searchResult->setFlowId($searchRequest->getFlowId());
         $searchResult->setSupplier($searchRequest->getSupplier());
         $searchResult->setData(uniqid('Result: ', true));
-        sleep(mt_rand(2, 5));
-        $this->redisRepository->insert($this->redisService->getSearchIdBySearchRequest($searchRequest), serialize($searchResult));
-        $this->logger->addInfo(sprintf('Job done, flowId: %s, supplier: %s', $searchRequest->getFlowId(), $searchRequest->getSupplier()));
+
+        return $searchResult;
     }
 }
