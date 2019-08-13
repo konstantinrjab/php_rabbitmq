@@ -10,7 +10,7 @@ $asyncSearch = new AsyncSearch();
 $searchRequest = new SearchRequest();
 $searchRequest->setFlowId(uniqid());
 
-$supplierNames = ['supplier1', 'supplier2', 'supplier3', 'supplier4', 'supplier5', 'supplier6', 'supplier7', 'supplier8'];
+$supplierNames = ['supplier1', 'supplier2', 'supplier3', 'supplier4', 'supplier5', 'supplier6', 'supplier7'];
 $supplierCollection = new SupplierCollection();
 $supplierCollection->createAndAddSuppliers($supplierNames);
 
