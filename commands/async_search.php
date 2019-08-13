@@ -6,7 +6,9 @@ use App\Collection\SupplierCollection;
 
 require_once '../vendor/autoload.php';
 
-$asyncSearch = new AsyncSearch();
+$container = new DI\Container();
+$asyncSearch = $container->get(AsyncSearch::class);
+
 $searchRequest = new SearchRequest();
 $searchRequest->setFlowId(uniqid());
 
@@ -16,4 +18,4 @@ $supplierCollection->createAndAddSuppliers($supplierNames);
 
 $searchResultCollection = $asyncSearch->search($searchRequest, $supplierCollection);
 
-echo 'Get result from '.count($searchResultCollection).' suppliers out of '.count($supplierNames)."\n\n";
+echo 'Get result from '.count($searchResultCollection).' suppliers out of '.count($supplierCollection)."\n\n";

@@ -19,10 +19,10 @@ class AsyncSearch
     /** @var RedisRepository $redisRepository */
     private $redisRepository;
 
-    public function __construct()
+    public function __construct(RedisService $redisService, RedisRepository $redisRepository)
     {
-        $this->redisService = new RedisService();
-        $this->redisRepository = new RedisRepository();
+        $this->redisService = $redisService;
+        $this->redisRepository = $redisRepository;
     }
 
     public function search(

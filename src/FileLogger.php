@@ -12,10 +12,11 @@ class FileLogger extends Logger
     private const SEARCH_STARTED_TEMPLATE = 'Searching, flowId: %s, supplier: %s';
     private const SLEEP_TEMPLATE = 'Seep for %ss, searchId: %s';
     private const READY_STATE_TEMPLATE = 'Ready to handle incoming messages, searchId: %s';
+    private const LOGGER_NAME = 'fileLogger';
 
     public function __construct()
     {
-        parent::__construct('fileLogger');
+        parent::__construct(self::LOGGER_NAME);
         $this->pushHandler(new StreamHandler(self::PATH, Logger::DEBUG));
     }
 

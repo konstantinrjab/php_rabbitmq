@@ -6,6 +6,7 @@ require_once '../vendor/autoload.php';
 
 $searchId = $argv[1];
 
-$worker = new SearchWorker($searchId);
+$container = new DI\Container();
+$searchWorker = $container->get(SearchWorker::class);
 
-$worker->listen();
+$searchWorker->listen($searchId);

@@ -12,9 +12,9 @@ class RedisRepository
     /** @var Redis $redis */
     private $redis;
 
-    public function __construct()
+    public function __construct(Redis $redis)
     {
-        $this->redis = new Redis();
+        $this->redis = $redis;
         $this->redis->pconnect('redis');
     }
 

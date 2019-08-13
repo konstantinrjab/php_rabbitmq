@@ -3,7 +3,6 @@
 namespace App;
 
 use App\Repository\RedisRepository;
-use App\Service\RedisService;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
@@ -16,14 +15,8 @@ class SearchWorker
     /** @var int $timeStarted */
     private $timeStarted;
 
-    /** @var bool $isWaiting */
-    private $isWaiting = false;
-
     /** @var FileLogger $logger */
     private $logger;
-
-    /** @var string $searchId */
-    private $searchId;
 
     /** @var Searcher $searcher */
     private $searcher;
@@ -31,19 +24,18 @@ class SearchWorker
     /** @var RedisRepository $redisRepository */
     private $redisRepository;
 
-    /** @var RedisService $redisService */
-    private $redisService;
-
-    public function __construct(string $searchId)
+    public function __construct(
+        FileLogger $logger,
+        RedisRepository $redisRepository,
+        Searcher $searcher
+    )
     {
-        $this->searchId = $searchId;
-        $this->logger = new FileLogger();
-        $this->redisRepository = new RedisRepository();
-        $this->redisService = new RedisService();
-        $this->searcher = new Searcher($this->logger, $this->redisRepository, $this->redisService);
+        $this->logger = $logger;
+        $this->redisRepository = $redisRepository;
+        $this->searcher = $searcher;
     }
 
-    public function listen(): void
+    public function listen(string $searchId): void
     {
         $this->timeStarted = microtime(true);
 
@@ -52,7 +44,7 @@ class SearchWorker
         $channel = $connection->channel();
 
         $channel->queue_declare(
-            $this->searchId,
+            $searchId,
             false,
             true,
             false,
@@ -76,7 +68,7 @@ class SearchWorker
          * Each consumer (subscription) has an identifier called a consumer tag
          */
         $channel->basic_consume(
-            $this->searchId,
+            $searchId,
             '',                     #consumer tag - Identifier for the consumer, valid within the current channel. just string
             false,                  #no local - TRUE: the server will not send messages to the connection that published them
             false,                  #no ack, false - acks turned on, true - off.  send a proper acknowledgment from the worker, once we're done with a task
@@ -85,8 +77,10 @@ class SearchWorker
             array($this, 'process')
         );
 
-        while (count($channel->callbacks) && !$this->timeoutReached() && !$this->isWorkDone()) {
+        $this->logger->logReadyState($searchId);
+        while (count($channel->callbacks) && !$this->timeoutReached() && !$this->isWorkDone($searchId)) {
             $this->wait($channel);
+            $this->logger->logSleep($searchId, self::WAITING_TIMEOUT);
         }
 
         $channel->close();
@@ -111,27 +105,20 @@ class SearchWorker
     {
         $currentTime = microtime(true);
         if ($currentTime >= $this->timeStarted + self::RESPONSE_TIMEOUT) {
-            $this->logger->addInfo('Timeout reached, searchId: '.$this->searchId);
-
             return true;
         }
 
         return false;
     }
 
-    private function isWorkDone(): bool
+    private function isWorkDone(string $searchId): bool
     {
-        return (bool) $this->redisRepository->getSearchResult($this->searchId);
+        return (bool)$this->redisRepository->getSearchResult($searchId);
     }
 
     private function wait(AMQPChannel $channel): void
     {
-        if (!$this->isWaiting) {
-            $this->isWaiting = true;
-            $this->logger->logReadyState($this->searchId);
-        }
         $channel->wait(null, true);
         sleep(self::WAITING_TIMEOUT);
-        $this->logger->logSleep($this->searchId, self::WAITING_TIMEOUT);
     }
 }
