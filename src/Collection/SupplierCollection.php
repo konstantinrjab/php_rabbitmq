@@ -2,9 +2,12 @@
 
 namespace App\Collection;
 
-use Doctrine\Common\Collections\ArrayCollection;
+use App\Entity\Supplier;
 
-class SupplierCollection extends ArrayCollection
+class SupplierCollection extends ObjectCollection
 {
-
+    public function __construct(array $elements = [])
+    {
+        parent::__construct(Supplier::class, $elements);
+    }
 }

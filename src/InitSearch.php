@@ -5,6 +5,7 @@ namespace App;
 use App\Collection\SearchResultCollection;
 use App\Collection\SupplierCollection;
 use App\Entity\SearchRequest;
+use App\Entity\SearchResult;
 use App\Entity\Supplier;
 
 class InitSearch

@@ -2,9 +2,12 @@
 
 namespace App\Collection;
 
-use Doctrine\Common\Collections\ArrayCollection;
+use App\Entity\SearchResult;
 
-class SearchResultCollection extends ArrayCollection
+class SearchResultCollection extends ObjectCollection
 {
-
+    public function __construct(array $elements = [])
+    {
+        parent::__construct(SearchResult::class, $elements);
+    }
 }
