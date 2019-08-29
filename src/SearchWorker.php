@@ -5,7 +5,6 @@ namespace App;
 use App\Helper\RabbitmqConnectionHelper;
 use App\Repository\RedisRepository;
 use PhpAmqpLib\Channel\AMQPChannel;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 
 class SearchWorker

@@ -5,7 +5,6 @@ namespace App;
 use App\Collection\SearchResultCollection;
 use App\Collection\SupplierCollection;
 use App\Entity\SearchRequest;
-use App\Entity\SearchResult;
 use App\Entity\Supplier;
 
 class InitSearch
@@ -20,16 +19,15 @@ class InitSearch
 
     public function search(array $supplierNames): SearchResultCollection
     {
-        $supplierCollection = $this->createSupplierCollection($supplierNames);
+        $supplierCollection = $this->createAndFillSupplierCollection($supplierNames);
         $searchRequest = $this->createSearchRequest();
 
         return $this->asyncSearch->search($searchRequest, $supplierCollection);
     }
 
-    private function createSupplierCollection(array $supplierNames): SupplierCollection
+    private function createAndFillSupplierCollection(array $supplierNames): SupplierCollection
     {
         $supplierCollection = new SupplierCollection();
-
         foreach ($supplierNames as $supplierName) {
             $supplier = new Supplier();
             $supplier->setName($supplierName);

@@ -8,7 +8,6 @@ use App\Entity\SearchRequest;
 use App\Helper\RabbitmqConnectionHelper;
 use App\Repository\RedisRepository;
 use App\Service\RedisService;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Channel\AMQPChannel;
 
