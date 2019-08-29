@@ -6,15 +6,16 @@ use App\Collection\SearchResultCollection;
 use App\Collection\SupplierCollection;
 use App\Entity\SearchRequest;
 use App\Entity\Supplier;
+use App\Service\AsyncSearchService;
 
 class InitSearch
 {
-    /** @var AsyncSearch $asyncSearch */
-    private $asyncSearch;
+    /** @var AsyncSearchService $asyncSearchService */
+    private $asyncSearchService;
 
-    public function __construct(AsyncSearch $asyncSearch)
+    public function __construct(AsyncSearchService $asyncSearchService)
     {
-        $this->asyncSearch = $asyncSearch;
+        $this->asyncSearchService = $asyncSearchService;
     }
 
     public function search(array $supplierNames): SearchResultCollection
@@ -22,7 +23,7 @@ class InitSearch
         $supplierCollection = $this->createAndFillSupplierCollection($supplierNames);
         $searchRequest = $this->createSearchRequest();
 
-        return $this->asyncSearch->search($searchRequest, $supplierCollection);
+        return $this->asyncSearchService->search($searchRequest, $supplierCollection);
     }
 
     private function createAndFillSupplierCollection(array $supplierNames): SupplierCollection

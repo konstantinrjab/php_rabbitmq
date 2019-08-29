@@ -4,6 +4,7 @@ namespace App;
 
 use App\Helper\RabbitmqConnectionHelper;
 use App\Repository\RedisRepository;
+use App\Service\SearchService;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
 
@@ -18,8 +19,8 @@ class SearchWorker
     /** @var FileLogger $logger */
     private $logger;
 
-    /** @var Searcher $searcher */
-    private $searcher;
+    /** @var SearchService $searchService */
+    private $searchService;
 
     /** @var RedisRepository $redisRepository */
     private $redisRepository;
@@ -27,12 +28,12 @@ class SearchWorker
     public function __construct(
         FileLogger $logger,
         RedisRepository $redisRepository,
-        Searcher $searcher
+        SearchService $searchService
     )
     {
         $this->logger = $logger;
         $this->redisRepository = $redisRepository;
-        $this->searcher = $searcher;
+        $this->searchService = $searchService;
     }
 
     public function listen(string $searchId): void
@@ -90,7 +91,7 @@ class SearchWorker
     public function process(AMQPMessage $msg): void
     {
         $searchRequest = unserialize($msg->body);
-        $this->searcher->search($searchRequest);
+        $this->searchService->search($searchRequest);
 
         /**
          * If a consumer dies without sending an acknowledgement the AMQP broker

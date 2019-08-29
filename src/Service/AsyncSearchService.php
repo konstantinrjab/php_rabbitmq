@@ -1,29 +1,24 @@
 <?php
 
-namespace App;
+namespace App\Service;
 
 use App\Collection\SearchResultCollection;
 use App\Collection\SupplierCollection;
 use App\Entity\SearchRequest;
 use App\Helper\RabbitmqConnectionHelper;
 use App\Repository\RedisRepository;
-use App\Service\RedisService;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Channel\AMQPChannel;
 
-class AsyncSearch
+class AsyncSearchService
 {
     private const SEARCH_TIMEOUT = 5;
-
-    /** @var RedisService $redisService */
-    private $redisService;
 
     /** @var RedisRepository $redisRepository */
     private $redisRepository;
 
-    public function __construct(RedisService $redisService, RedisRepository $redisRepository)
+    public function __construct(RedisRepository $redisRepository)
     {
-        $this->redisService = $redisService;
         $this->redisRepository = $redisRepository;
     }
 
@@ -36,7 +31,7 @@ class AsyncSearch
         $channel = $connection->channel();
 
         foreach ($supplierCollection as $supplier) {
-            $searchId = $this->redisService->getSearchIdByFlowIdAndSupplier($searchRequest->getFlowId(), $supplier);
+            $searchId = $this->redisRepository->getSearchIdByFlowIdAndSupplier($searchRequest->getFlowId(), $supplier);
             $channel->queue_declare(
                 $searchId,
                 false,    #passive - can use this to check whether an exchange exists without modifying the server state
@@ -75,7 +70,7 @@ class AsyncSearch
     {
         $searchResultCollection = new SearchResultCollection();
         foreach ($supplierCollection as $supplier) {
-            $searchId = $this->redisService->getSearchIdByFlowIdAndSupplier($flowId, $supplier);
+            $searchId = $this->redisRepository->getSearchIdByFlowIdAndSupplier($flowId, $supplier);
             $searchResult = $this->redisRepository->getSearchResult($searchId);
             if ($searchResult) {
                 $searchResultCollection->add($searchResult);

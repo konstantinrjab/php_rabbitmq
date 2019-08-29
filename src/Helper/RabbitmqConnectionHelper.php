@@ -6,7 +6,12 @@ use PhpAmqpLib\Connection\AMQPStreamConnection;
 
 class RabbitmqConnectionHelper
 {
-    static private $connection = null;
+    private const PORT = 5672;
+    private const HOST = 'rabbitmq';
+    private const USER = 'guest';
+    private const PASSWORD = 'guest';
+
+    private static $connection = null;
 
     private function __construct()
     {
@@ -31,6 +36,6 @@ class RabbitmqConnectionHelper
 
     private static function createConnection(): AMQPStreamConnection
     {
-        return new AMQPStreamConnection('rabbitmq', 5672, 'guest', 'guest');
+        return new AMQPStreamConnection(self::HOST, self::PORT, self::USER, self::PASSWORD);
     }
 }

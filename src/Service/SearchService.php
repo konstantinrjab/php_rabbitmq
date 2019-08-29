@@ -1,13 +1,13 @@
 <?php
 
-namespace App;
+namespace App\Service;
 
 use App\Entity\SearchRequest;
 use App\Entity\SearchResult;
+use App\FileLogger;
 use App\Repository\RedisRepository;
-use App\Service\RedisService;
 
-class Searcher
+class SearchService
 {
     /** @var FileLogger $logger */
     private $logger;
@@ -15,14 +15,10 @@ class Searcher
     /** @var RedisRepository $redisRepository */
     private $redisRepository;
 
-    /** @var RedisService $redisService */
-    private $redisService;
-
-    public function __construct(FileLogger $logger, RedisRepository $redisRepository, RedisService $redisService)
+    public function __construct(FileLogger $logger, RedisRepository $redisRepository)
     {
         $this->logger = $logger;
         $this->redisRepository = $redisRepository;
-        $this->redisService = $redisService;
     }
 
     public function search(SearchRequest $searchRequest): void
@@ -32,9 +28,9 @@ class Searcher
 
         $searchResult = $this->createSearchResult($searchRequest);
 
-        $sleepTime = mt_rand(3, 6);
-        sleep($sleepTime);
-        $this->redisRepository->insert($this->redisService->getSearchIdBySearchRequest($searchRequest), serialize($searchResult));
+        $sleepTime = $this->wait();
+
+        $this->redisRepository->insertSearchResult($searchRequest, $searchResult);
         $this->logger->logJobIsDone($sleepTime, $searchRequest->getFlowId(), $supplierName);
     }
 
@@ -46,5 +42,13 @@ class Searcher
         $searchResult->setData(uniqid('Result: ', true));
 
         return $searchResult;
+    }
+
+    private function wait(): int
+    {
+        $sleepTime = mt_rand(3, 6);
+        sleep($sleepTime);
+
+        return $sleepTime;
     }
 }

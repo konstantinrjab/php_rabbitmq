@@ -2,7 +2,9 @@
 
 namespace App\Repository;
 
+use App\Entity\SearchRequest;
 use App\Entity\SearchResult;
+use App\Entity\Supplier;
 use Redis;
 
 class RedisRepository
@@ -18,9 +20,9 @@ class RedisRepository
         $this->redis->pconnect('redis');
     }
 
-    public function insert(string $key, string $value): void
+    public function getSearchIdByFlowIdAndSupplier(string $flowId, Supplier $supplier): string
     {
-        $this->redis->set($key, $value, self::TTL);
+        return $flowId.'_'.$supplier->getName();
     }
 
     public function getSearchResult(string $key): ?SearchResult
@@ -31,5 +33,12 @@ class RedisRepository
         }
 
         return unserialize($result);
+    }
+
+    public function insertSearchResult(SearchRequest $searchRequest, SearchResult $searchResult): void
+    {
+        $key = $this->getSearchIdByFlowIdAndSupplier($searchRequest->getFlowId(), $searchRequest->getSupplier());
+
+        $this->redis->set($key, serialize($searchResult), self::TTL);
     }
 }
