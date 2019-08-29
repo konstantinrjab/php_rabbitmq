@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Helper\RabbitmqConnectionHelper;
 use App\Repository\RedisRepository;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
@@ -39,7 +40,7 @@ class SearchWorker
     {
         $this->timeStarted = microtime(true);
 
-        $connection = new AMQPStreamConnection('rabbitmq', 5672, 'guest', 'guest');
+        $connection = RabbitmqConnectionHelper::getConnection();
 
         $channel = $connection->channel();
 

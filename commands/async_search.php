@@ -1,21 +1,14 @@
 <?php
 
-use App\Entity\SearchRequest;
-use App\AsyncSearch;
-use App\Collection\SupplierCollection;
+use App\InitSearch;
 
 require_once '../vendor/autoload.php';
 
 $container = new DI\Container();
-$asyncSearch = $container->get(AsyncSearch::class);
-
-$searchRequest = new SearchRequest();
-$searchRequest->setFlowId(uniqid());
+$initSearch = $container->get(InitSearch::class);
 
 $supplierNames = ['supplier1', 'supplier2', 'supplier3', 'supplier4', 'supplier5', 'supplier6', 'supplier7'];
-$supplierCollection = new SupplierCollection();
-$supplierCollection->createAndAddSuppliers($supplierNames);
 
-$searchResultCollection = $asyncSearch->search($searchRequest, $supplierCollection);
+$searchResultCollection = $initSearch->search($supplierNames);
 
-echo 'Get result from '.count($searchResultCollection).' suppliers out of '.count($supplierCollection)."\n\n";
+echo 'Received result from '.count($searchResultCollection).' suppliers out of '.count($supplierNames)."\n\n";

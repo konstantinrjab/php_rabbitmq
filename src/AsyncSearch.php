@@ -5,6 +5,7 @@ namespace App;
 use App\Collection\SearchResultCollection;
 use App\Collection\SupplierCollection;
 use App\Entity\SearchRequest;
+use App\Helper\RabbitmqConnectionHelper;
 use App\Repository\RedisRepository;
 use App\Service\RedisService;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
@@ -13,6 +14,8 @@ use PhpAmqpLib\Channel\AMQPChannel;
 
 class AsyncSearch
 {
+    private const SEARCH_TIMEOUT = 5;
+
     /** @var RedisService $redisService */
     private $redisService;
 
@@ -30,7 +33,7 @@ class AsyncSearch
         SupplierCollection $supplierCollection
     ): SearchResultCollection
     {
-        $connection = new AMQPStreamConnection('rabbitmq', 5672, 'guest', 'guest');
+        $connection = RabbitmqConnectionHelper::getConnection();
         $channel = $connection->channel();
 
         foreach ($supplierCollection as $supplier) {
@@ -48,7 +51,8 @@ class AsyncSearch
 
         $channel->close();
         $connection->close();
-        sleep(5);
+
+        $this->waitForResults();
 
         return $this->assembleSearchResult($searchRequest->getFlowId(), $supplierCollection);
     }
@@ -72,12 +76,18 @@ class AsyncSearch
     {
         $searchResultCollection = new SearchResultCollection();
         foreach ($supplierCollection as $supplier) {
-            $searchResult = $this->redisRepository->getSearchResult($this->redisService->getSearchIdByFlowIdAndSupplier($flowId, $supplier));
+            $searchId = $this->redisService->getSearchIdByFlowIdAndSupplier($flowId, $supplier);
+            $searchResult = $this->redisRepository->getSearchResult($searchId);
             if ($searchResult) {
                 $searchResultCollection->add($searchResult);
             }
         }
 
         return $searchResultCollection;
+    }
+
+    private function waitForResults(): void
+    {
+        sleep(self::SEARCH_TIMEOUT);
     }
 }
