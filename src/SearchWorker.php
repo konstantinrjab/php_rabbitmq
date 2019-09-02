@@ -2,7 +2,6 @@
 
 namespace App;
 
-use App\Helper\RabbitmqConnectionHelper;
 use App\Repository\RedisRepository;
 use App\Service\SearchService;
 use PhpAmqpLib\Channel\AMQPChannel;
@@ -25,24 +24,28 @@ class SearchWorker
     /** @var RedisRepository $redisRepository */
     private $redisRepository;
 
+    /** @var RabbitmqConnectionManger $rabbitmqConnectionManager */
+    private $rabbitmqConnectionManager;
+
     public function __construct(
         FileLogger $logger,
         RedisRepository $redisRepository,
-        SearchService $searchService
+        SearchService $searchService,
+        RabbitmqConnectionManger $rabbitmqConnectionManager
     )
     {
         $this->logger = $logger;
         $this->redisRepository = $redisRepository;
         $this->searchService = $searchService;
+        $this->rabbitmqConnectionManager = $rabbitmqConnectionManager;
     }
 
     public function listen(string $searchId): void
     {
         $this->timeStarted = microtime(true);
 
-        $connection = RabbitmqConnectionHelper::getConnection();
-
-        $channel = $connection->channel();
+        $rabbitConnection = $this->rabbitmqConnectionManager->getConnection();
+        $channel = $rabbitConnection->channel();
 
         $channel->queue_declare(
             $searchId,
@@ -85,7 +88,7 @@ class SearchWorker
         }
 
         $channel->close();
-        $connection->close();
+        $rabbitConnection->close();
     }
 
     public function process(AMQPMessage $msg): void

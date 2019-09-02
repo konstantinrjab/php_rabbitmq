@@ -5,7 +5,7 @@ namespace App\Service;
 use App\Collection\SearchResultCollection;
 use App\Collection\SupplierCollection;
 use App\Entity\SearchRequest;
-use App\Helper\RabbitmqConnectionHelper;
+use App\RabbitmqConnectionManger;
 use App\Repository\RedisRepository;
 use PhpAmqpLib\Message\AMQPMessage;
 use PhpAmqpLib\Channel\AMQPChannel;
@@ -17,9 +17,16 @@ class AsyncSearchService
     /** @var RedisRepository $redisRepository */
     private $redisRepository;
 
-    public function __construct(RedisRepository $redisRepository)
+    /** @var RabbitmqConnectionManger $rabbitmqConnectionManager */
+    private $rabbitmqConnectionManager;
+
+    public function __construct(
+        RedisRepository $redisRepository,
+        RabbitmqConnectionManger $rabbitmqConnectionManager
+    )
     {
         $this->redisRepository = $redisRepository;
+        $this->rabbitmqConnectionManager = $rabbitmqConnectionManager;
     }
 
     public function search(
@@ -27,8 +34,8 @@ class AsyncSearchService
         SupplierCollection $supplierCollection
     ): SearchResultCollection
     {
-        $connection = RabbitmqConnectionHelper::getConnection();
-        $channel = $connection->channel();
+        $rabbitmqConnection = $this->rabbitmqConnectionManager->getConnection();
+        $channel = $rabbitmqConnection->channel();
 
         foreach ($supplierCollection as $supplier) {
             $searchId = $this->redisRepository->getSearchIdByFlowIdAndSupplier($searchRequest->getFlowId(), $supplier);
@@ -36,7 +43,7 @@ class AsyncSearchService
                 $searchId,
                 false,    #passive - can use this to check whether an exchange exists without modifying the server state
                 true,
-                false,   #exclusive - used by only one connection and the queue will be deleted when that connection closes
+                false,   #exclusive - used by only one rabbitmqConnection and the queue will be deleted when that rabbitmqConnection closes
                 true
             );
             $this->sendJobMessage($searchRequest, $supplier, $channel, $searchId);
@@ -44,7 +51,7 @@ class AsyncSearchService
         }
 
         $channel->close();
-        $connection->close();
+        $rabbitmqConnection->close();
 
         $this->waitForResults();
 
