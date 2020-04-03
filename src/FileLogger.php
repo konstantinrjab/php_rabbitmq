@@ -7,17 +7,17 @@ use Monolog\Logger;
 
 class FileLogger extends Logger
 {
-    private const PATH = __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'logs'.DIRECTORY_SEPARATOR.'main.log';
     private const JOB_DONE_TEMPLATE = 'Job done, took %ss, flowId: %s, supplier: %s';
     private const SEARCH_STARTED_TEMPLATE = 'Searching, flowId: %s, supplier: %s';
-    private const SLEEP_TEMPLATE = 'Seep for %ss, searchId: %s';
+    private const SLEEP_TEMPLATE = 'Sleep for %ss, searchId: %s';
     private const READY_STATE_TEMPLATE = 'Ready to handle incoming messages, searchId: %s';
     private const LOGGER_NAME = 'fileLogger';
 
     public function __construct()
     {
         parent::__construct(self::LOGGER_NAME);
-        $this->pushHandler(new StreamHandler(self::PATH, Logger::DEBUG));
+        $path = __DIR__  . '/../logs/main.log';
+        $this->pushHandler(new StreamHandler($path, Logger::DEBUG));
     }
 
     public function logJobIsDone(int $time, string $flowId, string $supplierName): void
@@ -34,6 +34,7 @@ class FileLogger extends Logger
     {
         $this->addInfo(sprintf(self::SLEEP_TEMPLATE, $searchId, $time));
     }
+
     public function logReadyState(string $searchId): void
     {
         $this->addInfo(sprintf(self::READY_STATE_TEMPLATE, $searchId));

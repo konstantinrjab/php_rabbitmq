@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Collection;
+namespace App\Collections;
 
-use App\Entity\SearchResult;
+use App\Entities\SearchResult;
 
 /**
  * @method SearchResult get($key)

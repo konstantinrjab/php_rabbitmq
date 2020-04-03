@@ -2,16 +2,18 @@ version: '3'
 
 services:
   php-fpm:
-    container_name: php
+    container_name: php_async_php
     build:
       context: ./php-fpm
     environment:
-      XDEBUG_CONFIG: "remote_host=host.docker.internal"
+      XDEBUG_CONFIG: "remote_host=172.17.0.1"
+#      XDEBUG_CONFIG: "remote_host=host.docker.internal"
       PHP_IDE_CONFIG: "serverName=Docker"
     volumes:
       - ../:/var/www
+    user: ${DOCKER_USER}
   nginx:
-    container_name: nginx
+    container_name: php_async_nginx
     build:
       context: ./nginx
     volumes:
@@ -25,13 +27,13 @@ services:
       - "80:80"
       - "443:443"
   rabbitmq:
-    container_name: rabbitmq
+    container_name: php_async_rabbitmq
     image: rabbitmq:3
     ports:
       - "5672:5672"
       - "15672:15672"
   redis:
-    container_name: redis
+    container_name: php_async_redis
     image: redis:5.0-alpine
     ports:
       - "6379:6379"

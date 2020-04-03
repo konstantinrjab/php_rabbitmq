@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Collection;
+namespace App\Collections;
 
-use App\Entity\Supplier;
+use App\Entities\Supplier;
 
 /**
  * @method Supplier get($key)

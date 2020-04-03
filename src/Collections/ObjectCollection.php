@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Collection;
+namespace App\Collections;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Exception;
@@ -15,7 +15,6 @@ abstract class ObjectCollection extends ArrayCollection
         $this->className = $className;
 
         foreach ($elements as $element) {
-            $this->checkElementClass($element);
             $this->add($element);
         }
         parent::__construct($elements);
@@ -28,6 +27,10 @@ abstract class ObjectCollection extends ArrayCollection
         return parent::add($element);
     }
 
+    /**
+     * @param $element
+     * @throws Exception
+     */
     private function checkElementClass($element): void
     {
         if (!$element instanceof $this->className) {

@@ -2,49 +2,41 @@
 
 namespace App;
 
-use App\Repository\RedisRepository;
-use App\Service\SearchService;
+use App\Repositories\RedisRepository;
+use App\Services\SearchService;
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Message\AMQPMessage;
+use App\Database\RabbitmqConnectionManger;
 
 class SearchWorker
 {
     private const RESPONSE_TIMEOUT = 5;
-    private const WAITING_TIMEOUT = 1;
+    private const WAIT_TIMEOUT = 1;
 
     /** @var int $timeStarted */
     private $timeStarted;
-
     /** @var FileLogger $logger */
     private $logger;
-
     /** @var SearchService $searchService */
     private $searchService;
-
     /** @var RedisRepository $redisRepository */
     private $redisRepository;
-
-    /** @var RabbitmqConnectionManger $rabbitmqConnectionManager */
-    private $rabbitmqConnectionManager;
 
     public function __construct(
         FileLogger $logger,
         RedisRepository $redisRepository,
-        SearchService $searchService,
-        RabbitmqConnectionManger $rabbitmqConnectionManager
-    )
-    {
+        SearchService $searchService
+    ) {
         $this->logger = $logger;
         $this->redisRepository = $redisRepository;
         $this->searchService = $searchService;
-        $this->rabbitmqConnectionManager = $rabbitmqConnectionManager;
     }
 
     public function listen(string $searchId): void
     {
         $this->timeStarted = microtime(true);
 
-        $rabbitConnection = $this->rabbitmqConnectionManager->getConnection();
+        $rabbitConnection = RabbitmqConnectionManger::getConnection();
         $channel = $rabbitConnection->channel();
 
         $channel->queue_declare(
@@ -84,7 +76,7 @@ class SearchWorker
         $this->logger->logReadyState($searchId);
         while (count($channel->callbacks) && !$this->timeoutReached() && !$this->isWorkDone($searchId)) {
             $this->wait($channel);
-            $this->logger->logSleep($searchId, self::WAITING_TIMEOUT);
+            $this->logger->logSleep($searchId, self::WAIT_TIMEOUT);
         }
 
         $channel->close();
@@ -117,12 +109,12 @@ class SearchWorker
 
     private function isWorkDone(string $searchId): bool
     {
-        return (bool)$this->redisRepository->getSearchResult($searchId);
+        return (bool) $this->redisRepository->getSearchResult($searchId);
     }
 
     private function wait(AMQPChannel $channel): void
     {
         $channel->wait(null, true);
-        sleep(self::WAITING_TIMEOUT);
+        sleep(self::WAIT_TIMEOUT);
     }
 }

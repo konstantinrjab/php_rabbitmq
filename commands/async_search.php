@@ -1,14 +1,21 @@
 <?php
 
-use App\InitSearch;
+use App\Controllers\SearchController;
+use App\Requests\SearchRequest;
 
 require_once '../vendor/autoload.php';
 
 $container = new DI\Container();
-$initSearch = $container->get(InitSearch::class);
+/** @var SearchController $searchController */
+$searchController = $container->get(SearchController::class);
 
 $supplierNames = ['supplier1', 'supplier2', 'supplier3', 'supplier4', 'supplier5', 'supplier6', 'supplier7'];
+$searchRequest = new SearchRequest($supplierNames);
 
-$searchResultCollection = $initSearch->search($supplierNames);
+$suppliersCount = count($supplierNames);
 
-echo 'Received result from '.count($searchResultCollection).' suppliers out of '.count($supplierNames)."\n\n";
+echo "Started search id: {$searchRequest->getFlowId()} for {$suppliersCount} suppliers...\n";
+
+$searchResultCollection = $searchController->search($searchRequest);
+
+echo "Received result from {$searchResultCollection->count()} suppliers out of $suppliersCount\n";
