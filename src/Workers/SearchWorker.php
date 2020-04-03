@@ -1,7 +1,8 @@
 <?php
 
-namespace App;
+namespace App\Workers;
 
+use App\Loggers\FileLogger;
 use App\Repositories\RedisRepository;
 use App\Services\SearchService;
 use PhpAmqpLib\Channel\AMQPChannel;

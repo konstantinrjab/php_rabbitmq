@@ -4,7 +4,7 @@ namespace App\Services;
 
 use App\Entities\SearchResult;
 use App\Requests\SupplierSearchRequest;
-use App\FileLogger;
+use App\Loggers\FileLogger;
 use App\Repositories\RedisRepository;
 
 class SearchService

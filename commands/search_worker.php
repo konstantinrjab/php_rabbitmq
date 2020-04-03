@@ -1,6 +1,6 @@
 <?php
 
-use App\SearchWorker;
+use App\Workers\SearchWorker;
 
 require_once '../vendor/autoload.php';
 
